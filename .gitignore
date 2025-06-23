@@ -1,4 +1,11 @@
-out/
+# Ignore IntelliJ files
 .idea/
 *.iml
+
+# Ignore build output
+out/
 *.class
+
+# Ignore OS files
+.DS_Store
+
