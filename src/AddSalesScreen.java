@@ -1,12 +1,17 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 
 public class AddSalesScreen extends JFrame {
-    private static final String URL = "jdbc:mysql://localhost:3306/PoultryPlus"; // Replace with your database URL
-    private static final String USERNAME = "root"; // Replace with your database username
-    private static final String PASSWORD = "Tanya@03"; // Replace with your database password
+    private static final String URL = "jdbc:mysql://localhost:3306/PoultryPlus";
+    private static final String USERNAME = "root";
+    private static final String PASSWORD = "Tanya@03";
+
     private JTextField dateField;
     private JTextField numberOfChicksField;
     private JTextField customerNameField;
@@ -17,11 +22,12 @@ public class AddSalesScreen extends JFrame {
 
     public AddSalesScreen() {
         setTitle("Add Sales");
-        setSize(500, 600); // Height and width of the screen pop up
+        setSize(500, 600);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
+        // Set theme color
         Color whatsappDarkGrey = new Color(54, 57, 63);
         getContentPane().setBackground(whatsappDarkGrey);
 
@@ -29,128 +35,17 @@ public class AddSalesScreen extends JFrame {
         GridBagConstraints gbc = new GridBagConstraints();
         addSalesPanel.setBackground(whatsappDarkGrey);
 
-        JLabel titleLabel = new JLabel("Add Sales Record");
-        titleLabel.setForeground(Color.WHITE);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        gbc.insets = new Insets(20, 5, 20, 5);
-        addSalesPanel.add(titleLabel, gbc);
+        setupForm(addSalesPanel, gbc);
 
-        JLabel dateLabel = new JLabel("Date:");
-        dateLabel.setForeground(Color.WHITE);
-        gbc.gridy = 1;
-        gbc.gridwidth = 1;
-        gbc.gridx = 0;
-        addSalesPanel.add(dateLabel, gbc);
-
-        dateField = new JTextField(15);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        addSalesPanel.add(dateField, gbc);
-
-        JLabel numberOfChicksLabel = new JLabel("Number of Chicks Sold:");
-        numberOfChicksLabel.setForeground(Color.WHITE);
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        addSalesPanel.add(numberOfChicksLabel, gbc);
-
-        numberOfChicksField = new JTextField(15);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        addSalesPanel.add(numberOfChicksField, gbc);
-
-        JLabel customerNameLabel = new JLabel("Customer Name:");
-        customerNameLabel.setForeground(Color.WHITE);
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        addSalesPanel.add(customerNameLabel, gbc);
-
-        customerNameField = new JTextField(15);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        addSalesPanel.add(customerNameField, gbc);
-
-        JLabel customerAddressLabel = new JLabel("Customer Address:");
-        customerAddressLabel.setForeground(Color.WHITE);
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        addSalesPanel.add(customerAddressLabel, gbc);
-
-        customerAddressField = new JTextField(15);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        addSalesPanel.add(customerAddressField, gbc);
-
-        JLabel customerContactLabel = new JLabel("Customer Contact:");
-        customerContactLabel.setForeground(Color.WHITE);
-        gbc.gridx = 0;
-        gbc.gridy = 5;
-        addSalesPanel.add(customerContactLabel, gbc);
-
-        customerContactField = new JTextField(15);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        addSalesPanel.add(customerContactField, gbc);
-
-        JLabel amountLabel = new JLabel("Amount Paid:");
-        amountLabel.setForeground(Color.WHITE);
-        gbc.gridx = 0;
-        gbc.gridy = 6;
-        addSalesPanel.add(amountLabel, gbc);
-
-        amountField = new JTextField(15);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        addSalesPanel.add(amountField, gbc);
-
-        JLabel debtLabel = new JLabel("Debt:");
-        debtLabel.setForeground(Color.WHITE);
-        gbc.gridx = 0;
-        gbc.gridy = 7;
-        addSalesPanel.add(debtLabel, gbc);
-
-        debtField = new JTextField(15);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        addSalesPanel.add(debtField, gbc);
-
+        // Add Button with theme
         Color whatsappDarkGreen = new Color(18, 140, 73);
-
         JButton addButton = new JButton("Add");
         addButton.setBackground(whatsappDarkGreen);
         addButton.setForeground(Color.WHITE);
         addButton.setOpaque(true);
         addButton.setBorderPainted(false);
-        addButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String date = dateField.getText();
-                String numberOfChicks = numberOfChicksField.getText();
-                String customerName = customerNameField.getText();
-                String customerAddress = customerAddressField.getText();
-                String customerContact = customerContactField.getText();
-                String amount = amountField.getText();
-                String debt = debtField.getText();
 
-                if (!date.isEmpty() && !numberOfChicks.isEmpty() && !customerName.isEmpty() && !customerAddress.isEmpty() && !customerContact.isEmpty() && !amount.isEmpty()) {
-                    try {
-                        int chicksSold = Integer.parseInt(numberOfChicks);
-                        double paidAmount = Double.parseDouble(amount);
-                        double debtAmount = debt.isEmpty() ? 0 : Double.parseDouble(debt);
-
-                        // Add logic to insert the new sales record into the database here
-
-                        dispose(); // Close the add sales screen
-                    } catch (NumberFormatException ex) {
-                        JOptionPane.showMessageDialog(AddSalesScreen.this, "Please enter valid numeric values for chicks, amount, and debt.", "Invalid Input", JOptionPane.ERROR_MESSAGE);
-                    }
-                } else {
-                    JOptionPane.showMessageDialog(AddSalesScreen.this, "Please fill in all fields.", "Incomplete Form", JOptionPane.WARNING_MESSAGE);
-                }
-            }
-        });
+        addButton.addActionListener(e -> addSalesRecord());
 
         gbc.gridy = 8;
         gbc.gridx = 0;
@@ -162,13 +57,119 @@ public class AddSalesScreen extends JFrame {
         add(addSalesPanel, BorderLayout.CENTER);
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                AddSalesScreen addSalesScreen = new AddSalesScreen();
-                addSalesScreen.setVisible(true);
+    private void setupForm(JPanel panel, GridBagConstraints gbc) {
+        JLabel titleLabel = new JLabel("Add Sales Record");
+        titleLabel.setForeground(Color.WHITE);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        gbc.insets = new Insets(20, 5, 20, 5);
+        panel.add(titleLabel, gbc);
+
+        // Form fields setup
+        setupField(panel, gbc, "Date (yyyy-mm-dd):", dateField = new JTextField(15), 1);
+        setupField(panel, gbc, "Number of Chicks Sold:", numberOfChicksField = new JTextField(15), 2);
+        setupField(panel, gbc, "Customer Name:", customerNameField = new JTextField(15), 3);
+        setupField(panel, gbc, "Customer Address:", customerAddressField = new JTextField(15), 4);
+        setupField(panel, gbc, "Customer Contact:", customerContactField = new JTextField(15), 5);
+        setupField(panel, gbc, "Amount Paid:", amountField = new JTextField(15), 6);
+        setupField(panel, gbc, "Debt:", debtField = new JTextField(15), 7);
+    }
+
+    private void setupField(JPanel panel, GridBagConstraints gbc, String labelText, JTextField field, int row) {
+        JLabel label = new JLabel(labelText);
+        label.setForeground(Color.WHITE);
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        gbc.gridwidth = 1;
+        panel.add(label, gbc);
+
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(field, gbc);
+    }
+
+    private void addSalesRecord() {
+        String date = dateField.getText();
+        String numberOfChicks = numberOfChicksField.getText();
+        String customerName = customerNameField.getText();
+        String customerAddress = customerAddressField.getText();
+        String customerContact = customerContactField.getText();
+        String amount = amountField.getText();
+        String debt = debtField.getText();
+
+        if (validateFields(date, numberOfChicks, customerName, customerAddress, customerContact, amount, debt)) {
+            try {
+                int chicksSold = Integer.parseInt(numberOfChicks);
+                double paidAmount = Double.parseDouble(amount);
+                double debtAmount = debt.isEmpty() ? 0 : Double.parseDouble(debt);
+
+                insertSalesRecord(date, chicksSold, customerName, customerAddress, customerContact, paidAmount, debtAmount);
+
+                JOptionPane.showMessageDialog(this, "Sales record added successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                dispose(); // Close the add sales screen
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, "Error adding sales record to the database.", "Database Error", JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
             }
+        }
+    }
+
+    private boolean validateFields(String date, String numberOfChicks, String customerName, String customerAddress, String customerContact, String amount, String debt) {
+        if (date.isEmpty() || numberOfChicks.isEmpty() || customerName.isEmpty() || customerAddress.isEmpty() || customerContact.isEmpty() || amount.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please fill in all fields.", "Incomplete Form", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+
+        try {
+            new SimpleDateFormat("yyyy-MM-dd").parse(date);
+        } catch (ParseException e) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid date (yyyy-mm-dd).", "Invalid Date", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        try {
+            Integer.parseInt(numberOfChicks);
+            Double.parseDouble(amount);
+            if (!debt.isEmpty()) Double.parseDouble(debt);
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Please enter valid numeric values.", "Invalid Input", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        return true;
+    }
+
+    private void insertSalesRecord(String date, int chicksSold, String customerName, String customerAddress, String customerContact, double amountPaid, double debt) throws SQLException {
+        try (Connection conn = getConnection()) {
+            String query = "INSERT INTO sales (Date, Number_of_Chicks_Sold, Customer_Name, Customer_Address, Customer_Contact, Amount_Paid, Debt) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement ps = conn.prepareStatement(query)) {
+                ps.setString(1, date);
+                ps.setInt(2, chicksSold);
+                ps.setString(3, customerName);
+                ps.setString(4, customerAddress);
+                ps.setString(5, customerContact);
+                ps.setDouble(6, amountPaid);
+                ps.setDouble(7, debt);
+                ps.executeUpdate();
+            }
+        }
+    }
+
+    private Connection getConnection() throws SQLException {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+            throw new SQLException("MySQL JDBC Driver not found!", e);
+        }
+        return DriverManager.getConnection(URL, USERNAME, PASSWORD);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            AddSalesScreen addSalesScreen = new AddSalesScreen();
+            addSalesScreen.setVisible(true);
         });
     }
 }

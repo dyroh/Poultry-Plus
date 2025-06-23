@@ -1,79 +1,102 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class UpdateChicksPanel extends JPanel {
-    private JTextField chicksField, reasonField;
-    private Main mainFrame;
-    private static final String URL = "jdbc:mysql://localhost:3306/PoultryPlus";
-    private static final String USERNAME = "root";
-    private static final String PASSWORD = "your_database_password";
+    private JTextField newTotalField;
+    private JTextField reasonField;
+    private AppController mainFrame; // Reference to AppController for switching screens
 
-    public UpdateChicksPanel(Main mainFrame) {
+    public UpdateChicksPanel(AppController mainFrame) {
         this.mainFrame = mainFrame;
+
+        // Layout and styling for UpdateChicksPanel
         setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        setBackground(new Color(54, 57, 63)); // Dark grey
 
-        JLabel chickLabel = new JLabel("New Chick Count:");
-        chickLabel.setForeground(Color.WHITE);
+        // Label and input field for new total chicks
+        JLabel newTotalLabel = new JLabel("New Total:");
         gbc.gridx = 0;
         gbc.gridy = 0;
-        add(chickLabel, gbc);
+        add(newTotalLabel, gbc);
 
-        chicksField = new JTextField(15);
+        newTotalField = new JTextField(10);
         gbc.gridx = 1;
-        add(chicksField, gbc);
+        add(newTotalField, gbc);
 
+        // Label and input field for update reason
         JLabel reasonLabel = new JLabel("Reason:");
-        reasonLabel.setForeground(Color.WHITE);
         gbc.gridx = 0;
         gbc.gridy = 1;
         add(reasonLabel, gbc);
 
-        reasonField = new JTextField(15);
+        reasonField = new JTextField(10);
         gbc.gridx = 1;
         add(reasonField, gbc);
 
+        // Update button
         JButton updateButton = new JButton("Update");
-        updateButton.setBackground(new Color(18, 140, 73));
-        updateButton.setForeground(Color.WHITE);
         gbc.gridx = 1;
         gbc.gridy = 2;
+
+        // Set button styles
+        updateButton.setBackground(new Color(18, 140, 73)); // WhatsApp green
+        updateButton.setForeground(Color.WHITE); // White text
+        updateButton.setOpaque(true); // Ensure background is painted
+        updateButton.setBorderPainted(false); // Remove border painting for a flat design
+
         add(updateButton, gbc);
 
-        updateButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String chickCount = chicksField.getText();
-                String reason = reasonField.getText();
-
-                if (updateChickCount(chickCount, reason)) {
-                    JOptionPane.showMessageDialog(UpdateChicksPanel.this, "Chick count updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                    mainFrame.showScreen("Home");
-                }
-            }
-        });
+        // Action listener to handle the update process
+        updateButton.addActionListener(e -> updateChicks());
     }
 
-    private boolean updateChickCount(String chickCount, String reason) {
-        try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD)) {
-            String query = "UPDATE chicks SET count = ?, reason = ? WHERE id = 1";
-            PreparedStatement statement = conn.prepareStatement(query);
-            statement.setString(1, chickCount);
-            statement.setString(2, reason);
-            int rowsUpdated = statement.executeUpdate();
-            return rowsUpdated > 0;
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Database error", "Error", JOptionPane.ERROR_MESSAGE);
+    // Method to handle updating chicks in the database
+    private void updateChicks() {
+        String total = newTotalField.getText();
+        String reason = reasonField.getText();
+
+        // Validate input fields before updating the database
+        if (validateFields(total, reason)) {
+            try (Connection conn = DatabaseConnection.getConnection()) {
+                String query = "INSERT INTO chicks (total_chicks, update_reason) VALUES (?, ?)";
+                try (PreparedStatement ps = conn.prepareStatement(query)) {
+                    ps.setInt(1, Integer.parseInt(total));
+                    ps.setString(2, reason);
+                    ps.executeUpdate();
+
+                    // Show success message and return to home screen
+                    JOptionPane.showMessageDialog(this, "Chick count updated successfully!");
+                    mainFrame.getCardLayout().show(mainFrame.getCardPanel(), "Home");
+
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(this, "Error updating chicks in the database.",
+                            "Database Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Database connection error.", "Database Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    // Method to validate input fields
+    private boolean validateFields(String total, String reason) {
+        if (total.isEmpty() || reason.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please enter both the total chicks and a reason.",
+                    "Input Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        try {
+            Integer.parseInt(total); // Check if total is a valid integer
+            return true;
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid number for the total chicks.",
+                    "Input Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
     }

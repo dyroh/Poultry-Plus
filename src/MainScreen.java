@@ -1,178 +1,112 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class MainScreen extends JFrame {
+public class MainScreen extends JPanel {
     private JLabel totalChicksLabel;
+    private AppController mainFrame;
 
-    // Database connection details
-    private static final String URL = "jdbc:mysql://localhost:3306/PoultryPlus";
-    private static final String USERNAME = "root";
-    private static final String PASSWORD = "Tanya@03";
+    public MainScreen(AppController mainFrame, Connection connection) {
+        this.mainFrame = mainFrame;
 
-    public MainScreen() {
-        setTitle("Poultry Plus - Main Screen");
-        setSize(600, 400);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
-        setLayout(new BorderLayout());
+        setLayout(new GridBagLayout());
+        setBackground(mainFrame.isDarkTheme() ? new Color(54, 57, 63) : new Color(245, 245, 245));
 
-        Color whatsappDarkGrey = new Color(54, 57, 63);
-        getContentPane().setBackground(whatsappDarkGrey);
-
-        JPanel mainPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-        mainPanel.setBackground(whatsappDarkGrey);
+        gbc.insets = new Insets(10, 10, 10, 10);
 
         JLabel titleLabel = new JLabel("Welcome to Poultry Plus!");
-        titleLabel.setForeground(Color.WHITE);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        titleLabel.setForeground(mainFrame.isDarkTheme() ? Color.WHITE : Color.BLACK);
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridwidth = 3;
-        gbc.insets = new Insets(20, 5, 20, 5);
-        mainPanel.add(titleLabel, gbc);
+        gbc.gridwidth = 2;
+        add(titleLabel, gbc);
 
-        // Initialize the total chicks label with a placeholder text
         totalChicksLabel = new JLabel("Total number of chicks: Loading...");
-        totalChicksLabel.setForeground(Color.WHITE);
+        totalChicksLabel.setForeground(mainFrame.isDarkTheme() ? Color.WHITE : Color.BLACK);
         gbc.gridy = 1;
-        mainPanel.add(totalChicksLabel, gbc);
+        add(totalChicksLabel, gbc);
 
-        // Update button to refresh the number of chicks
-        JButton updateButton = new JButton("Update");
-        updateButton.setBackground(new Color(18, 140, 73));
-        updateButton.setForeground(Color.WHITE);
-        updateButton.setOpaque(true);
-        updateButton.setBorderPainted(false);
-        updateButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                UpdateChicksScreen updateChicksScreen = new UpdateChicksScreen(MainScreen.this);
-                updateChicksScreen.setVisible(true);
-            }
-        });
+        JButton updateButton = new JButton("Update Chicks");
+        styleButton(updateButton);
         gbc.gridy = 2;
-        mainPanel.add(updateButton, gbc);
+        add(updateButton, gbc);
 
-        add(mainPanel, BorderLayout.CENTER);
-        add(createBottomNavigation(), BorderLayout.SOUTH);
+        // Button to view chick update history
+        JButton viewHistoryButton = new JButton("View Chick Update History");
+        styleButton(viewHistoryButton);
+        gbc.gridy = 3;
+        add(viewHistoryButton, gbc);
 
-        // Fetch and display the total number of chicks from the database
-        loadTotalChicks();
+        updateButton.addActionListener(e -> mainFrame.getCardLayout().show(mainFrame.getCardPanel(), "UpdateChicks"));
+        viewHistoryButton.addActionListener(e -> saveChickUpdateHistoryToFile());
+
+        updateTotalChicks();
     }
 
-    // Method to create the bottom navigation bar
-    private JPanel createBottomNavigation() {
-        JPanel bottomPanel = new JPanel(new GridLayout(1, 4));
-        Color whatsappDarkGreen = new Color(18, 140, 73);
+    // Update the total chicks displayed by querying the database
+    public void updateTotalChicks() {
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement ps = connection.prepareStatement("SELECT total_chicks FROM chicks ORDER BY updated_at DESC LIMIT 1");
+             ResultSet rs = ps.executeQuery()) {
 
-        JButton homeButton = new JButton("Home");
-        homeButton.setBackground(whatsappDarkGreen);
-        homeButton.setForeground(Color.WHITE);
-        homeButton.setOpaque(true);
-        homeButton.setBorderPainted(false);
-        homeButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                MainScreen.this.setVisible(true);
-            }
-        });
-
-        JButton purchasesButton = new JButton("Purchases");
-        purchasesButton.setBackground(whatsappDarkGreen);
-        purchasesButton.setForeground(Color.WHITE);
-        purchasesButton.setOpaque(true);
-        purchasesButton.setBorderPainted(false);
-        purchasesButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                PurchasesScreen purchasesScreen = new PurchasesScreen();
-                purchasesScreen.setVisible(true);
-                MainScreen.this.setVisible(false); // Hide MainScreen
-            }
-        });
-
-        JButton salesButton = new JButton("Sales");
-        salesButton.setBackground(whatsappDarkGreen);
-        salesButton.setForeground(Color.WHITE);
-        salesButton.setOpaque(true);
-        salesButton.setBorderPainted(false);
-        salesButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                SalesScreen salesScreen = new SalesScreen();
-                salesScreen.setVisible(true);
-                MainScreen.this.setVisible(false); // Hide MainScreen
-            }
-        });
-
-        JButton signOutButton = new JButton("Sign Out");
-        signOutButton.setBackground(whatsappDarkGreen);
-        signOutButton.setForeground(Color.WHITE);
-        signOutButton.setOpaque(true);
-        signOutButton.setBorderPainted(false);
-        signOutButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                LoginScreen loginScreen = new LoginScreen();
-                loginScreen.setVisible(true);
-                MainScreen.this.dispose(); // Close MainScreen
-            }
-        });
-
-        bottomPanel.add(homeButton);
-        bottomPanel.add(purchasesButton);
-        bottomPanel.add(salesButton);
-        bottomPanel.add(signOutButton);
-
-        return bottomPanel;
-    }
-
-    // Method to fetch the total number of chicks from the database
-    private void loadTotalChicks() {
-        try (Connection conn = getConnection()) {
-            String query = "SELECT COUNT(*) AS total FROM chicks"; // Replace with your actual table name and column
-            PreparedStatement statement = conn.prepareStatement(query);
-            ResultSet resultSet = statement.executeQuery();
-
-            if (resultSet.next()) {
-                int totalChicks = resultSet.getInt("total");
+            if (rs.next()) {
+                int totalChicks = rs.getInt("total_chicks");
                 totalChicksLabel.setText("Total number of chicks: " + totalChicks);
+            } else {
+                totalChicksLabel.setText("Total number of chicks: No Data");
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error fetching total chicks count", "Database Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private Connection getConnection() throws SQLException {
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-        } catch (ClassNotFoundException e) {
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Error updating chick count: " + e.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
-            throw new SQLException("MySQL JDBC Driver not found!", e);
         }
-        return DriverManager.getConnection(URL, USERNAME, PASSWORD);
     }
 
-    public void updateTotalChicks(int newTotal) {
-        totalChicksLabel.setText("Total number of chicks: " + newTotal);
-    }
+    // Method to save chick update history to a text file and open it
+    private void saveChickUpdateHistoryToFile() {
+        String query = "SELECT total_chicks, update_reason, updated_at FROM chicks ORDER BY updated_at DESC";
+        File file = new File("chick_update_history.txt");
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                MainScreen mainScreen = new MainScreen();
-                mainScreen.setVisible(true);
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement ps = connection.prepareStatement(query);
+             ResultSet rs = ps.executeQuery();
+             FileWriter writer = new FileWriter(file)) {
+
+            while (rs.next()) {
+                int totalChicks = rs.getInt("total_chicks");
+                String reason = rs.getString("update_reason");
+                String updatedAt = rs.getTimestamp("updated_at").toString();
+                String logEntry = "Date: " + updatedAt + ", Total Chicks: " + totalChicks + ", Reason: " + reason;
+                writer.write(logEntry + "\n");
             }
-        });
+
+            JOptionPane.showMessageDialog(this, "Chick update history saved to chick_update_history.txt", "Success", JOptionPane.INFORMATION_MESSAGE);
+
+            // Open the text file after saving
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().open(file);
+            } else {
+                JOptionPane.showMessageDialog(this, "File saved but cannot be opened automatically.", "Notice", JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (SQLException | IOException e) {
+            JOptionPane.showMessageDialog(this, "Error writing chick update history: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+
+    // Styling button according to the current theme
+    private void styleButton(JButton button) {
+        button.setBackground(new Color(18, 140, 73));
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createLineBorder(new Color(0, 128, 0), 2));
+        button.setFont(new Font("Arial", Font.BOLD, 14));
     }
 }
