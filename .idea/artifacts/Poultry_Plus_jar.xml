@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Poultry Plus:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Poultry_Plus_jar</output-path>
+    <root id="archive" name="Poultry Plus.jar">
+      <element id="module-output" name="Poultry Plus" />
+      <element id="extracted-dir" path="$USER_HOME$/Desktop/IA/poultryplus/lib/mysql-connector-j-9.0.0.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
