@@ -9,7 +9,7 @@ A Java application for managing poultry sales and purchases with features such a
 - Git & GitHub
 
 ## How to Run
-Open in IntelliJ IDEA and run the main class `Main.java`.
+Open in IntelliJ IDEA and run the main class `AppController.java`.
 
 ## My Role
 I designed core features, implemented functionality, and managed version control using GitHub.
